@@ -45,7 +45,7 @@ DEV_TOOLS_ROOT=${PWD}
   fi
   echo "APP_FOLDER build arg: $APP_FOLDER"
 
-  docker build -f "$DEV_TOOLS_ROOT/Dockerfile" --build-arg APP_FOLDER="$APP_NAME" -t "$IMAGE_TAG" .
+  docker build -f "$DEV_TOOLS_ROOT/Dockerfile" --build-arg APP_FOLDER="$APP_FOLDER" -t "$IMAGE_TAG" .
 
   # Build docker run command
   DOCKER_RUN_CMD=(
