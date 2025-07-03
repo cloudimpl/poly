@@ -27,6 +27,8 @@ CHECKSUM_FILE="./.runtime/sidecar.checksum"
 S3_BINARY_URI="s3://buildspecs.polycode.app/polycode/engine/${SIDECAR_VERSION}"
 S3_CHECKSUM_URI="s3://buildspecs.polycode.app/polycode/engine/${SIDECAR_VERSION}.checksum"
 
+export ENVIRONMENT_ID=${1}
+
 # Download the latest checksum file
 echo "Downloading checksum file..."
 aws s3 cp "$S3_CHECKSUM_URI" "$CHECKSUM_FILE"

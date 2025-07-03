@@ -2,7 +2,7 @@
 set -e
 
 if [ -z "$1" ]; then
-  echo "Usage: $0 <app-folder> [host-port]"
+  echo "Usage: $0 <app-folder> [environment-id] [host-port]"
   exit 1
 fi
 
@@ -16,7 +16,8 @@ fi
 
 APP_PATH="$1"
 APP_NAME=$(basename "$APP_PATH")
-HOST_PORT="$2"
+ENVIRONMENT_ID="$2"
+HOST_PORT="$3"
 
 echo "App folder: $APP_PATH"
 echo "App name: $APP_NAME"
@@ -65,8 +66,8 @@ DEV_TOOLS_ROOT=${PWD}
     -e NATS_HOST="localhost:4222"
     -e DIRECT_ACCESS="true"
     -e polycode_DEV_MODE=true
-    -e polycode_ORG_ID="$polycode_ORG_ID"
-    -e polycode_ENV_ID="$polycode_ENV_ID"
+    -e polycode_ORG_ID="$ORGANIZATION_ID"
+    -e polycode_ENV_ID="$ENVIRONMENT_ID"
     -e polycode_APP_NAME="$APP_NAME"
     -e polycode_SERVICE_IDS="$SERVICE_IDS"
     -e polycode_RUNTIME="dev"

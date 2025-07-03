@@ -49,8 +49,8 @@ services:
       NATS_HOST: "nats:4222"
       DIRECT_ACCESS: "true"
       polycode_DEV_MODE: "true"
-      polycode_ORG_ID: ${polycode_ORG_ID}
-      polycode_ENV_ID: ${polycode_ENV_ID}
+      polycode_ORG_ID: ${ORGANIZATION_ID}
+      polycode_ENV_ID: ${ENVIRONMENT_ID}
       polycode_APP_NAME: "next-env"
       polycode_SERVICE_IDS: "auth-service,param-service,file-service"
       polycode_RUNTIME: "dev"
@@ -73,8 +73,8 @@ services:
       NATS_HOST: "nats:4222"
       DIRECT_ACCESS: "true"
       polycode_DEV_MODE: "true"
-      polycode_ORG_ID: ${polycode_ORG_ID}
-      polycode_ENV_ID: ${polycode_ENV_ID}
+      polycode_ORG_ID: ${ORGANIZATION_ID}
+      polycode_ENV_ID: ${ENVIRONMENT_ID}
       polycode_APP_NAME: "next-agent-runtime"
       polycode_SERVICE_IDS: "agent-service"
       polycode_RUNTIME: "dev"
@@ -98,8 +98,8 @@ services:
       NATS_HOST: "nats:4222"
       DIRECT_ACCESS: "true"
       polycode_DEV_MODE: "true"
-      polycode_ORG_ID: ${polycode_ORG_ID}
-      polycode_ENV_ID: ${polycode_ENV_ID}
+      polycode_ORG_ID: ${ORGANIZATION_ID}
+      polycode_ENV_ID: ${ENVIRONMENT_ID}
       polycode_APP_NAME: "next-ai-gw"
       polycode_SERVICE_IDS: "ai-gateway-service"
       polycode_RUNTIME: "dev"
