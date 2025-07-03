@@ -142,18 +142,6 @@ if ! aws --endpoint-url http://localhost:9000 s3api head-bucket --bucket polycod
   echo "Creating bucket polycode-files..."
   aws --endpoint-url http://localhost:9000 s3api create-bucket --bucket polycode-files
 
-  echo "Setting CORS configuration for polycode-files..."
-  aws --endpoint-url http://localhost:9000 s3api put-bucket-cors --bucket polycode-files --cors-configuration '{
-    "CORSRules": [
-      {
-        "AllowedMethods": ["GET", "PUT", "HEAD"],
-        "AllowedOrigins": ["*"],
-        "AllowedHeaders": ["*"],
-        "MaxAgeSeconds": 3000
-      }
-    ]
-  }'
-
   echo "Bucket polycode-files created and CORS configured"
 else
   echo "Bucket polycode-files already exists"
