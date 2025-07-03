@@ -70,7 +70,7 @@ DEV_TOOLS_ROOT=${PWD}
   fi
 
   # Add image
-  DOCKER_RUN_CMD+=("$IMAGE_TAG")
+  DOCKER_RUN_CMD+=("$IMAGE_TAG", "/var/task/bootstrap-fargate.sh")
 
   # Run the container
   "${DOCKER_RUN_CMD[@]}"
