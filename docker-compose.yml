@@ -1,8 +1,13 @@
 version: '3.8'
 
+networks:
+  polycode-dev:
+
 services:
   dynamodb:
     image: amazon/dynamodb-local
+    networks:
+      - polycode-dev
     ports:
       - "8000:8000"
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /data"
@@ -11,6 +16,8 @@ services:
 
   s3:
     image: minio/minio
+    networks:
+      - polycode-dev
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -26,6 +33,8 @@ services:
 
   nats:
     image: nats:latest
+    networks:
+      - polycode-dev
     ports:
       - "4222:4222"   # NATS client port
       - "8222:8222"   # NATS monitoring port (optional)
@@ -37,6 +46,8 @@ services:
       - s3
       - nats
     image: 537413656254.dkr.ecr.us-east-1.amazonaws.com/cloudimpl/xxx/next-env:latest
+    networks:
+      - polycode-dev
     pull_policy: always
     volumes:
       - ./.runtime:/tmp
@@ -61,6 +72,8 @@ services:
       - s3
       - nats
     image: 485496110001.dkr.ecr.us-east-1.amazonaws.com/485496110001/h7npshowhzdc5d/app-u6fj1h32637699:latest
+    networks:
+      - polycode-dev
     pull_policy: always
     volumes:
       - ./.runtime:/tmp
@@ -86,6 +99,8 @@ services:
       - s3
       - nats
     image: 485496110001.dkr.ecr.us-east-1.amazonaws.com/485496110001/h7npshowhzdc5d/app-xxor0ebrq8q2wg:latest
+    networks:
+      - polycode-dev
     pull_policy: always
     volumes:
       - ./.runtime:/tmp
