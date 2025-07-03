@@ -6,6 +6,14 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
+# Load .env file
+if [ -f .env ]; then
+  echo "Loading environment variables from .env"
+  export $(grep -v '^#' .env | xargs)
+else
+  echo "No .env file found, continuing without loading env vars"
+fi
+
 APP_PATH="$1"
 APP_NAME=$(basename "$APP_PATH")
 HOST_PORT="$2"
@@ -51,7 +59,7 @@ DEV_TOOLS_ROOT=${PWD}
   DOCKER_RUN_CMD=(
     docker run --rm -it
     --network polycode-dev-tools_polycode-dev
-    -v "$DEV_TOOLS_ROOT/runtime:/tmp"
+    -v "$DEV_TOOLS_ROOT/.runtime:/tmp"
     -e NATS_HOST=nats
     -e polycode_ORG_ID="$polycode_ORG_ID"
     -e polycode_ENV_ID="$polycode_ENV_ID"
@@ -70,7 +78,7 @@ DEV_TOOLS_ROOT=${PWD}
   fi
 
   # Add image
-  DOCKER_RUN_CMD+=("$IMAGE_TAG", "/var/task/bootstrap-fargate.sh")
+  DOCKER_RUN_CMD+=("$IMAGE_TAG" "/var/task/bootstrap-fargate.sh")
 
   # Run the container
   "${DOCKER_RUN_CMD[@]}"
