@@ -9,9 +9,6 @@ else
   echo "No .env file found, continuing without loading env vars"
 fi
 
-# Ensure ./.runtime exists
-mkdir -p ./.runtime
-
 # Download from S3 to ./.runtime
 echo "Downloading S3://buildspecs.polycode.app/polycode/engine/${SIDECAR_VERSION} to ./.runtime/sidecar ..."
 aws s3 cp "s3://buildspecs.polycode.app/polycode/engine/${SIDECAR_VERSION}" "./.runtime/sidecar"

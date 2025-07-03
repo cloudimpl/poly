@@ -1,3 +1,4 @@
 .runtime/sidecar
 .env
 .idea
+.dynamodb-data/
