@@ -37,6 +37,14 @@ DEV_TOOLS_ROOT=${PWD}
   IMAGE_TAG="${APP_NAME}:latest"
   echo "Image tag: $IMAGE_TAG"
 
+  # Determine APP_FOLDER arg
+  if [ "$APP_PATH" = "$GIT_ROOT" ]; then
+    APP_FOLDER="."
+  else
+    APP_FOLDER="$APP_NAME"
+  fi
+  echo "APP_FOLDER build arg: $APP_FOLDER"
+
   docker build -f "$DEV_TOOLS_ROOT/Dockerfile" --build-arg APP_FOLDER="$APP_NAME" -t "$IMAGE_TAG" .
 
   # Build docker run command
