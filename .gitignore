@@ -1,5 +1,7 @@
 .runtime/sidecar
+.runtime/sidecar.checksum
 .env
 .idea
 .data/dynamodb-local/shared-local-instance.db
 .data/minio/.minio.sys
+.data/minio/polycode-files

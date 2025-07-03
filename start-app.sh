@@ -58,12 +58,11 @@ DEV_TOOLS_ROOT=${PWD}
   # Build docker run command
   DOCKER_RUN_CMD=(
     docker run --rm -it
-    --network polycode-dev-tools_polycode-dev
     -v "$DEV_TOOLS_ROOT/.runtime:/tmp"
     -e AWS_REGION="$AWS_REGION"
     -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID"
     -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY"
-    -e NATS_HOST=nats
+    -e NATS_HOST="localhost:4222"
     -e DIRECT_ACCESS="true"
     -e polycode_DEV_MODE=true
     -e polycode_ORG_ID="$polycode_ORG_ID"
