@@ -1,4 +1,5 @@
 .runtime/sidecar
 .env
 .idea
-.dynamodb-data/
+.data/dynamodb-local/shared-local-instance.db
+.data/minio/.minio.sys

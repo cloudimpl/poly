@@ -15,6 +15,9 @@ docker compose up -d dynamodb s3
 # Wait briefly for services to be ready
 sleep 3
 
+export AWS_ACCESS_KEY_ID=local
+export AWS_SECRET_ACCESS_KEY=local
+
 # Create polycode-workflows table if not exists
 if ! aws dynamodb describe-table --table-name polycode-workflows --endpoint-url http://localhost:8000 >/dev/null 2>&1; then
   echo "Creating table polycode-workflows..."
@@ -61,11 +64,6 @@ if ! aws dynamodb describe-table --table-name polycode-workflows --endpoint-url 
     ]' \
     --endpoint-url http://localhost:8000
 
-  aws dynamodb update-time-to-live \
-    --table-name polycode-workflows \
-    --time-to-live-specification "Enabled=true, AttributeName=TTL" \
-    --endpoint-url http://localhost:8000
-
   echo "Created table polycode-workflows with TTL enabled"
 else
   echo "Table polycode-workflows already exists"
@@ -93,11 +91,6 @@ if ! aws dynamodb describe-table --table-name polycode-logs --endpoint-url http:
     ]' \
     --endpoint-url http://localhost:8000
 
-  aws dynamodb update-time-to-live \
-    --table-name polycode-logs \
-    --time-to-live-specification "Enabled=true, AttributeName=TTL" \
-    --endpoint-url http://localhost:8000
-
   echo "Created table polycode-logs with TTL enabled"
 else
   echo "Table polycode-logs already exists"
@@ -115,11 +108,6 @@ if ! aws dynamodb describe-table --table-name polycode-data --endpoint-url http:
     --key-schema \
       AttributeName=PKEY,KeyType=HASH \
       AttributeName=RKEY,KeyType=RANGE \
-    --endpoint-url http://localhost:8000
-
-  aws dynamodb update-time-to-live \
-    --table-name polycode-data \
-    --time-to-live-specification "Enabled=true, AttributeName=TTL" \
     --endpoint-url http://localhost:8000
 
   echo "Created table polycode-data with TTL enabled"
@@ -141,15 +129,13 @@ if ! aws dynamodb describe-table --table-name polycode-meta --endpoint-url http:
       AttributeName=RKEY,KeyType=RANGE \
     --endpoint-url http://localhost:8000
 
-  aws dynamodb update-time-to-live \
-    --table-name polycode-meta \
-    --time-to-live-specification "Enabled=true, AttributeName=TTL" \
-    --endpoint-url http://localhost:8000
-
   echo "Created table polycode-meta with TTL enabled"
 else
   echo "Table polycode-meta already exists"
 fi
+
+export AWS_ACCESS_KEY_ID=minioadmin
+export AWS_SECRET_ACCESS_KEY=minioadmin
 
 # S3 bucket polycode-files
 if ! aws --endpoint-url http://localhost:9000 s3api head-bucket --bucket polycode-files >/dev/null 2>&1; then
