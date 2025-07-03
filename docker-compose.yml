@@ -30,6 +30,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       NATS_HOST: "nats:4222"
       DIRECT_ACCESS: "true"
+      polycode_DEV_MODE: "true"
       polycode_ORG_ID: ${polycode_ORG_ID}
       polycode_ENV_ID: ${polycode_ENV_ID}
       polycode_APP_NAME: "next-env"
@@ -53,6 +54,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       NATS_HOST: "nats:4222"
       DIRECT_ACCESS: "true"
+      polycode_DEV_MODE: "true"
       polycode_ORG_ID: ${polycode_ORG_ID}
       polycode_ENV_ID: ${polycode_ENV_ID}
       polycode_APP_NAME: "next-agent-runtime"
@@ -77,6 +79,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       NATS_HOST: "nats:4222"
       DIRECT_ACCESS: "true"
+      polycode_DEV_MODE: "true"
       polycode_ORG_ID: ${polycode_ORG_ID}
       polycode_ENV_ID: ${polycode_ENV_ID}
       polycode_APP_NAME: "next-ai-gw"
