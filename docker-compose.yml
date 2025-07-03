@@ -1,8 +1,13 @@
 version: '3.8'
 
+networks:
+  polycode-dev:
+
 services:
   nats:
     image: nats:latest
+    networks:
+      - polycode-dev
     ports:
       - "4222:4222"   # NATS client port
       - "8222:8222"   # NATS monitoring port (optional)
@@ -12,12 +17,18 @@ services:
     depends_on:
       - nats
     image: 537413656254.dkr.ecr.us-east-1.amazonaws.com/cloudimpl/xxx/next-env:latest
+    networks:
+      - polycode-dev
     pull_policy: always
     volumes:
       - ./.runtime:/tmp
     command: ["/var/task/bootstrap-fargate.sh"]
     restart: unless-stopped
     environment:
+      AWS_REGION: "us-east-1"
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      NATS_HOST: "nats:4222"
       DIRECT_ACCESS: "true"
       polycode_ORG_ID: ${polycode_ORG_ID}
       polycode_ENV_ID: ${polycode_ENV_ID}
@@ -25,36 +36,44 @@ services:
       polycode_SERVICE_IDS: "auth-service,param-service,file-service"
       polycode_RUNTIME: "dev"
 
-  next-agent-runtime:
-    depends_on:
-      - nats
-    image: 485496110001.dkr.ecr.us-east-1.amazonaws.com/485496110001/h7npshowhzdc5d/app-u6fj1h32637699:latest
-    pull_policy: always
-    volumes:
-      - ./.runtime:/tmp
-    command: ["/var/task/bootstrap-fargate.sh"]
-    restart: unless-stopped
-    environment:
-      DIRECT_ACCESS: "true"
-      polycode_ORG_ID: ${polycode_ORG_ID}
-      polycode_ENV_ID: ${polycode_ENV_ID}
-      polycode_APP_NAME: "next-agent-.runtime"
-      polycode_SERVICE_IDS: "agent-service"
-      polycode_RUNTIME: "dev"
-
-  next-ai-gateway:
-    depends_on:
-      - nats
-    image: 485496110001.dkr.ecr.us-east-1.amazonaws.com/485496110001/h7npshowhzdc5d/app-xxor0ebrq8q2wg:latest
-    pull_policy: always
-    volumes:
-      - ./.runtime:/tmp
-    command: ["/var/task/bootstrap-fargate.sh"]
-    restart: unless-stopped
-    environment:
-      DIRECT_ACCESS: "true"
-      polycode_ORG_ID: ${polycode_ORG_ID}
-      polycode_ENV_ID: ${polycode_ENV_ID}
-      polycode_APP_NAME: "next-ai-gw"
-      polycode_SERVICE_IDS: "ai-gateway-service"
-      polycode_RUNTIME: "dev"
+#  next-agent-runtime:
+#    depends_on:
+#      - nats
+#    image: 485496110001.dkr.ecr.us-east-1.amazonaws.com/485496110001/h7npshowhzdc5d/app-u6fj1h32637699:latest
+#    pull_policy: always
+#    volumes:
+#      - ./.runtime:/tmp
+#    command: ["/var/task/bootstrap-fargate.sh"]
+#    restart: unless-stopped
+#    environment:
+#      AWS_REGION: "us-east-1"
+#      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+#      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+#      NATS_HOST: "nats:4222"
+#      DIRECT_ACCESS: "true"
+#      polycode_ORG_ID: ${polycode_ORG_ID}
+#      polycode_ENV_ID: ${polycode_ENV_ID}
+#      polycode_APP_NAME: "next-agent-.runtime"
+#      polycode_SERVICE_IDS: "agent-service"
+#      polycode_RUNTIME: "dev"
+#
+#  next-ai-gateway:
+#    depends_on:
+#      - nats
+#    image: 485496110001.dkr.ecr.us-east-1.amazonaws.com/485496110001/h7npshowhzdc5d/app-xxor0ebrq8q2wg:latest
+#    pull_policy: always
+#    volumes:
+#      - ./.runtime:/tmp
+#    command: ["/var/task/bootstrap-fargate.sh"]
+#    restart: unless-stopped
+#    environment:
+#      AWS_REGION: "us-east-1"
+#      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+#      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+#      NATS_HOST: "nats:4222"
+#      DIRECT_ACCESS: "true"
+#      polycode_ORG_ID: ${polycode_ORG_ID}
+#      polycode_ENV_ID: ${polycode_ENV_ID}
+#      polycode_APP_NAME: "next-ai-gw"
+#      polycode_SERVICE_IDS: "ai-gateway-service"
+#      polycode_RUNTIME: "dev"
