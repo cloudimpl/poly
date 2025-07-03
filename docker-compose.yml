@@ -45,7 +45,7 @@ services:
     pull_policy: always
     volumes:
       - ./.runtime:/tmp
-    command: ["/opt/extensions/sidecar"]
+    command: ["/var/task/bootstrap-fargate.sh"]
     restart: unless-stopped
     environment:
       AWS_REGION: "us-east-1"
@@ -69,7 +69,7 @@ services:
     pull_policy: always
     volumes:
       - ./.runtime:/tmp
-    command: ["/opt/extensions/sidecar"]
+    command: ["/var/task/bootstrap-fargate.sh"]
     restart: unless-stopped
     environment:
       AWS_REGION: "us-east-1"
