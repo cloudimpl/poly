@@ -40,10 +40,12 @@ services:
     depends_on:
       - nats
     image: 485496110001.dkr.ecr.us-east-1.amazonaws.com/485496110001/h7npshowhzdc5d/app-u6fj1h32637699:latest
+    networks:
+      - polycode-dev
     pull_policy: always
     volumes:
       - ./.runtime:/tmp
-    command: ["/var/task/bootstrap-fargate.sh"]
+    command: ["/opt/extensions/sidecar"]
     restart: unless-stopped
     environment:
       AWS_REGION: "us-east-1"
@@ -62,10 +64,12 @@ services:
     depends_on:
       - nats
     image: 485496110001.dkr.ecr.us-east-1.amazonaws.com/485496110001/h7npshowhzdc5d/app-xxor0ebrq8q2wg:latest
+    networks:
+      - polycode-dev
     pull_policy: always
     volumes:
       - ./.runtime:/tmp
-    command: ["/var/task/bootstrap-fargate.sh"]
+    command: ["/opt/extensions/sidecar"]
     restart: unless-stopped
     environment:
       AWS_REGION: "us-east-1"
