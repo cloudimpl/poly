@@ -45,12 +45,12 @@ DEV_TOOLS_ROOT=${PWD}
   fi
   echo "APP_FOLDER build arg: $APP_FOLDER"
 
-  docker build -f "$DEV_TOOLS_ROOT/Dockerfile" --build-arg APP_FOLDER="$APP_FOLDER" -t "$IMAGE_TAG" .
+  docker build --load -f "$DEV_TOOLS_ROOT/Dockerfile" --build-arg APP_FOLDER="$APP_FOLDER" -t "$IMAGE_TAG" .
 
   # Build docker run command
   DOCKER_RUN_CMD=(
     docker run --rm -it
-    --network polycode-dev
+    --network polycode-dev-tools_polycode-dev
     -v "$DEV_TOOLS_ROOT/runtime:/tmp"
     -e NATS_HOST=nats
     -e polycode_ORG_ID="$polycode_ORG_ID"
