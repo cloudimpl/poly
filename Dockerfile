@@ -3,7 +3,7 @@ FROM 537413656254.dkr.ecr.us-east-1.amazonaws.com/polycode/next-builder:latest A
 ARG APP_FOLDER
 WORKDIR /project/${APP_FOLDER}
 
-RUN go install github.com/cloudimpl/poly-watcher@latest
+RUN go install github.com/cloudimpl/poly-watcher@v0.3.0
 
 COPY ./.runtime/sidecar /tmp/sidecar
 COPY entrypoint.sh /tmp/entrypoint.sh
