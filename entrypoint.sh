@@ -1,10 +1,14 @@
 #!/bin/sh
 set -e
 
-# Start sidecar in background
+# Install user defined additional libraries
+if [ -f "./install.sh" ]; then \
+  chmod +x ./install.sh
+  ./install.sh
+else \
+  echo "No install.sh provided."
+fi && \
+
 /tmp/sidecar &
 
-# Start CompileDaemon
-exec CompileDaemon \
-  --build="next-gen && go mod tidy && go mod download && go build -o /main ." \
-  --command=./main
+poly-watcher --depfile=go.mod --depcommand="go mod tidy && go mod download" --build="GOOS=linux GOARCH=amd64 go build -o /main ." --run="/main" --include=.go,go.mod --exclude=.git,.polycode

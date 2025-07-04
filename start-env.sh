@@ -31,7 +31,7 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-ENVIRONMENT_ID=$1
+export ENVIRONMENT_ID=$1
 
 # Verify docker-compose.yml exists
 if [ ! -f docker-compose.yml ]; then

@@ -38,7 +38,7 @@ DEV_TOOLS_ROOT=${PWD}
 # Find project root
 cd "$APP_PATH"
 PROJECT_ROOT=$(git rev-parse --show-toplevel)
-echo "Git root: $PROJECT_ROOT"
+echo "Project root: $PROJECT_ROOT"
 
 # Build SERVICE_IDS from services folder
 SERVICE_IDS=$(find "$APP_PATH/services" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | paste -sd "," -)
