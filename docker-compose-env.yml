@@ -2,49 +2,10 @@ version: '3.8'
 
 networks:
   polycode-dev:
+    external: true
 
 services:
-  dynamodb:
-    image: amazon/dynamodb-local
-    networks:
-      - polycode-dev
-    ports:
-      - "8000:8000"
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /data"
-    volumes:
-      - ./.data/dynamodb-local:/data
-
-  s3:
-    image: minio/minio
-    networks:
-      - polycode-dev
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-      MINIO_CORS_ALLOW_ORIGIN: "*"
-      MINIO_CORS_ALLOW_METHODS: "GET,PUT,HEAD"
-      MINIO_CORS_ALLOW_HEADERS: "*"
-    command: server /data --console-address ":9001"
-    volumes:
-      - ./.data/minio:/data
-
-  nats:
-    image: nats:latest
-    networks:
-      - polycode-dev
-    ports:
-      - "4222:4222"   # NATS client port
-      - "8222:8222"   # NATS monitoring port (optional)
-    restart: unless-stopped
-
   next-env:
-    depends_on:
-      - dynamodb
-      - s3
-      - nats
     image: 537413656254.dkr.ecr.us-east-1.amazonaws.com/cloudimpl/xxx/next-env:latest
     networks:
       - polycode-dev
@@ -67,10 +28,6 @@ services:
       polycode_RUNTIME: "dev"
 
   next-agent-runtime:
-    depends_on:
-      - dynamodb
-      - s3
-      - nats
     image: 485496110001.dkr.ecr.us-east-1.amazonaws.com/485496110001/h7npshowhzdc5d/app-u6fj1h32637699:latest
     networks:
       - polycode-dev
@@ -94,10 +51,6 @@ services:
       polycode_ENV_EXTRACTOR: "shared agent"
 
   next-ai-gateway:
-    depends_on:
-      - dynamodb
-      - s3
-      - nats
     image: 485496110001.dkr.ecr.us-east-1.amazonaws.com/485496110001/h7npshowhzdc5d/app-xxor0ebrq8q2wg:latest
     networks:
       - polycode-dev

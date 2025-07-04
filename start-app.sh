@@ -59,7 +59,7 @@ docker network inspect polycode-dev-tools_polycode-dev >/dev/null 2>&1 || {
 # Build docker run command
 DOCKER_RUN_CMD=(
   docker run --rm -it
-  --network polycode-dev-tools_polycode-dev
+  --network polycode-dev
   -v "$PROJECT_ROOT:/project"
   -e AWS_REGION="$AWS_REGION"
   -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID"
