@@ -11,4 +11,4 @@ fi && \
 
 /tmp/sidecar &
 
-poly-watcher --depfile=go.mod --depcommand="go mod tidy && go mod download" --build="GOOS=linux GOARCH=amd64 go build -o /main ." --run="/main" --include=.go,go.mod --exclude=.git,.polycode
+poly-watcher --depfile=go.mod --depcommand="go mod tidy && go mod download" --build="next-gen && GOOS=linux GOARCH=amd64 go build -o /main ." --run="/main" --include=.go,go.mod --exclude=.git,.polycode
