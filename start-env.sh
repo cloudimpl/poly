@@ -19,12 +19,6 @@ for tool in aws docker; do
   fi
 done
 
-# Verify SIDECAR_VERSION is set
-if [ -z "$SIDECAR_VERSION" ]; then
-  echo "Error: SIDECAR_VERSION is not set. Please set it in your .env file or environment."
-  exit 1
-fi
-
 # Verify ENVIRONMENT_ID is provided as argument
 if [ -z "$1" ]; then
   echo "Error: ENVIRONMENT_ID argument is required. Usage: $0 <environment-id>"
@@ -57,8 +51,8 @@ AWS_REGION=${AWS_REGION:-us-east-1}
 mkdir -p ./.runtime
 LOCAL_FILE="./.runtime/sidecar"
 CHECKSUM_FILE="./.runtime/sidecar.checksum"
-S3_BINARY_URI="s3://buildspecs.polycode.app/polycode/engine/${SIDECAR_VERSION}"
-S3_CHECKSUM_URI="s3://buildspecs.polycode.app/polycode/engine/${SIDECAR_VERSION}.checksum"
+S3_BINARY_URI="s3://buildspecs.polycode.app/polycode/engine/latest"
+S3_CHECKSUM_URI="s3://buildspecs.polycode.app/polycode/engine/latest.checksum"
 
 # Download checksum file
 echo "Downloading checksum file..."
