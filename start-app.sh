@@ -51,8 +51,8 @@ echo "Building Docker image $IMAGE_TAG with APP_FOLDER=$APP_FOLDER"
 docker build --load --build-arg APP_FOLDER="$APP_FOLDER" -t "$IMAGE_TAG" .
 
 # Verify Docker network exists
-docker network inspect polycode-dev-tools_polycode-dev >/dev/null 2>&1 || {
-  echo "Docker network polycode-dev-tools_polycode-dev not found. Please create it."
+docker network inspect polycode-dev >/dev/null 2>&1 || {
+  echo "Polycode platform not started. Run 'start-platform.sh' first."
   exit 1
 }
 
