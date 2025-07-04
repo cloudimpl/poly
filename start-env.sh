@@ -1,16 +1,6 @@
 #!/bin/bash
 set -e
 
-# Load .env file safely
-if [ -f .env ]; then
-  echo "Loading environment variables from .env"
-  set -o allexport
-  source .env
-  set +o allexport
-else
-  echo "No .env file found, continuing without loading env vars"
-fi
-
 # Verify required tools
 for tool in aws docker; do
   if ! command -v $tool >/dev/null 2>&1; then

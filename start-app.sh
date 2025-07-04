@@ -7,14 +7,6 @@ if [ -z "$1" ] || [ -z "$2" ]; then
   exit 1
 fi
 
-# Load .env file
-if [ -f .env ]; then
-  echo "Loading environment variables from .env"
-  export $(grep -v '^#' .env | xargs)
-else
-  echo "No .env file found, continuing without loading env vars"
-fi
-
 APP_PATH="$1"
 ENVIRONMENT_ID="$2"
 HOST_PORT="$3"

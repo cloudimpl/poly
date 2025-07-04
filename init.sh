@@ -1,14 +1,6 @@
 #!/bin/bash
 set -e
 
-# Load .env file if it exists
-if [ -f .env ]; then
-  echo "Loading environment variables from .env"
-  export $(grep -v '^#' .env | xargs)
-else
-  echo "No .env file found, continuing without loading env vars"
-fi
-
 # Start only DynamoDB and S3
 docker compose up -d dynamodb s3
 
