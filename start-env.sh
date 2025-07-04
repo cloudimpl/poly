@@ -32,4 +32,9 @@ echo "ECR login successful."
 
 # === Start Docker Compose ===
 echo "Starting Docker Compose..."
-docker compose -f docker-compose-env.yml -p polycode-env-$ENVIRONMENT_ID up
+docker compose -f docker-compose-env.yml -p polycode-env-$ENVIRONMENT_ID up -d
+
+# === Wait briefly for services to be ready ===
+sleep 3
+
+echo "Environment $ENVIRONMENT_ID ready!"

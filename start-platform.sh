@@ -58,7 +58,7 @@ fi
 
 # === Start Docker Compose ===
 echo "Starting Docker Compose..."
-docker compose -f docker-compose-platform.yml -p polycode-platform up &
+docker compose -f docker-compose-platform.yml -p polycode-platform up -d
 
 # === Wait briefly for services to be ready ===
 sleep 3
@@ -160,4 +160,4 @@ else
   echo "Bucket polycode-files already exists"
 fi
 
-wait
+echo "Platform ready!"
