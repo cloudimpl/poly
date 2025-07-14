@@ -11,15 +11,11 @@ services:
       - polycode-dev
     pull_policy: always
     volumes:
-      - ./.runtime:/tmp
+      - ./runtime:/tmp
     command: ["/var/task/bootstrap-fargate.sh"]
     restart: unless-stopped
     environment:
-      AWS_REGION: "us-east-1"
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       NATS_HOST: "nats:4222"
-      DIRECT_ACCESS: "true"
       polycode_DEV_MODE: "true"
       polycode_ORG_ID: "xxx"
       polycode_ENV_ID: ${ENVIRONMENT_ID}
@@ -33,15 +29,11 @@ services:
       - polycode-dev
     pull_policy: always
     volumes:
-      - ./.runtime:/tmp
+      - ./runtime:/tmp
     command: ["/var/task/bootstrap-fargate.sh"]
     restart: unless-stopped
     environment:
-      AWS_REGION: "us-east-1"
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       NATS_HOST: "nats:4222"
-      DIRECT_ACCESS: "true"
       polycode_DEV_MODE: "true"
       polycode_ORG_ID: "xxx"
       polycode_ENV_ID: ${ENVIRONMENT_ID}
@@ -56,15 +48,11 @@ services:
       - polycode-dev
     pull_policy: always
     volumes:
-      - ./.runtime:/tmp
+      - ./runtime:/tmp
     command: ["/var/task/bootstrap-fargate.sh"]
     restart: unless-stopped
     environment:
-      AWS_REGION: "us-east-1"
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       NATS_HOST: "nats:4222"
-      DIRECT_ACCESS: "true"
       polycode_DEV_MODE: "true"
       polycode_ORG_ID: "xxx"
       polycode_ENV_ID: ${ENVIRONMENT_ID}

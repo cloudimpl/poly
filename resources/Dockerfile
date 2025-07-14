@@ -4,9 +4,10 @@ ARG APP_FOLDER
 WORKDIR /project/${APP_FOLDER}
 
 RUN go install github.com/cloudimpl/poly-watcher@v0.3.0
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
-COPY ./.runtime/sidecar /tmp/sidecar
-COPY entrypoint.sh /tmp/entrypoint.sh
+COPY ./runtime/sidecar /tmp/sidecar
+COPY ./entrypoint.sh /tmp/entrypoint.sh
 RUN chmod +x /tmp/sidecar && chmod +x /tmp/entrypoint.sh
 
 CMD ["/tmp/entrypoint.sh"]

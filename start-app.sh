@@ -60,6 +60,7 @@ docker network inspect polycode-dev >/dev/null 2>&1 || {
 DOCKER_RUN_CMD=(
   docker run --rm -it
   --network polycode-dev
+  -p 2345:2345
   -v "$PROJECT_ROOT:/project"
   -e AWS_REGION="us-east-1"
   -e NATS_HOST="nats:4222"
