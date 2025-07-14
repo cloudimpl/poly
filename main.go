@@ -245,7 +245,7 @@ func setupPlatform(ctx context.Context) error {
 		credentials.NewStaticCredentialsProvider(
 			"minioadmin",
 			"minioadmin",
-			"minioadmin",
+			"",
 		),
 	)
 
@@ -403,6 +403,7 @@ func setupPlatform(ctx context.Context) error {
 	// Set up MinIO S3 bucket
 	s3client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String("http://localhost:9000/")
+		o.UsePathStyle = true
 	})
 	bucketName := "polycode-files"
 

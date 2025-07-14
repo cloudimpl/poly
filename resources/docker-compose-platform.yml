@@ -13,7 +13,7 @@ services:
       - "8000:8000"
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /data"
     volumes:
-      - ./.data/dynamodb-local:/data
+      - ./data/dynamodb-local:/data
 
   s3:
     image: minio/minio
@@ -30,7 +30,7 @@ services:
       MINIO_CORS_ALLOW_HEADERS: "*"
     command: server /data --console-address ":9001"
     volumes:
-      - ./.data/minio:/data
+      - ./data/minio:/data
 
   nats:
     image: nats:latest
