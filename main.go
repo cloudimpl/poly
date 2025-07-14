@@ -232,6 +232,30 @@ func stopPlatform() error {
 	return nil
 }
 
+func psPlatform() error {
+	fmt.Println("Getting platform status")
+
+	cmd := exec.Command("docker", "compose",
+		"-f", "docker-compose-platform.yml",
+		"-p", "polycode-platform",
+		"ps")
+
+	// Set working directory to ~/.polycode
+	cmd.Dir = getPolycodeDir()
+
+	// Optional: stream output to terminal
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	// Execute the command
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("docker compose failed: %w", err)
+	}
+
+	return nil
+}
+
 func attr(name string, t types.ScalarAttributeType) types.AttributeDefinition {
 	return types.AttributeDefinition{AttributeName: aws.String(name), AttributeType: t}
 }
@@ -533,6 +557,36 @@ func stopEnvironment(envID string) error {
 	return nil
 }
 
+func psEnvironment(envID string) error {
+	if envID == "" {
+		return fmt.Errorf("environment ID is required")
+	}
+
+	fmt.Println("Viewing environment status...")
+
+	cmd := exec.Command("docker", "compose",
+		"-f", "docker-compose-env.yml",
+		"-p", "polycode-env-"+envID,
+		"ps")
+
+	// Set working directory to ~/.polycode
+	cmd.Dir = getPolycodeDir()
+
+	cmd.Env = append(os.Environ(), "ENVIRONMENT_ID="+envID) // ✅ set ENVIRONMENT_ID for docker-compose
+
+	// Optional: stream output to terminal
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	// Execute the command
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("docker compose failed: %w", err)
+	}
+
+	return nil
+}
+
 func main() {
 	app := &cli.App{
 		Name:  "polycode",
@@ -560,6 +614,16 @@ func main() {
 						Usage: "Stop the platform",
 						Action: func(c *cli.Context) error {
 							if err := stopPlatform(); err != nil {
+								return fmt.Errorf("stop docker: %w", err)
+							}
+							return nil
+						},
+					},
+					{
+						Name:  "ps",
+						Usage: "View the platform",
+						Action: func(c *cli.Context) error {
+							if err := psPlatform(); err != nil {
 								return fmt.Errorf("stop docker: %w", err)
 							}
 							return nil
@@ -598,6 +662,22 @@ func main() {
 							envID := c.Args().Get(0)
 
 							if err := stopEnvironment(envID); err != nil {
+								return fmt.Errorf("stop docker: %w", err)
+							}
+							return nil
+						},
+					},
+					{
+						Name:      "ps",
+						Usage:     "View an environment",
+						ArgsUsage: "<environment-id>",
+						Action: func(c *cli.Context) error {
+							if c.Args().Len() < 1 {
+								return fmt.Errorf("missing <environment-id>")
+							}
+							envID := c.Args().Get(0)
+
+							if err := psEnvironment(envID); err != nil {
 								return fmt.Errorf("stop docker: %w", err)
 							}
 							return nil
