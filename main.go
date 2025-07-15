@@ -566,7 +566,30 @@ func startEnvironment(envID string) error {
 		return fmt.Errorf("environment ID is required")
 	}
 
-	err := loginDockerRegistries()
+	checkCmd := exec.Command("docker", "compose",
+		"-f", "docker-compose-env.yml",
+		"-p", "polycode-env-"+envID,
+		"ps", "--format", "json")
+	checkCmd.Dir = getPolycodeDir()
+
+	output, err := checkCmd.Output()
+	if err == nil && len(output) > 0 {
+		// Parse JSON to check if any service is "running"
+		var services []struct {
+			Name  string `json:"Name"`
+			State string `json:"State"`
+		}
+		if err := json.Unmarshal(output, &services); err == nil {
+			for _, svc := range services {
+				if svc.State == "running" {
+					fmt.Println("✅ Environment already started.")
+					return nil
+				}
+			}
+		}
+	}
+
+	err = loginDockerRegistries()
 	if err != nil {
 		return err
 	}
@@ -609,6 +632,11 @@ func stopEnvironment(envID string) error {
 	cmd.Dir = getPolycodeDir()
 
 	cmd.Env = append(os.Environ(), "ENVIRONMENT_ID="+envID) // ✅ set ENVIRONMENT_ID for docker-compose
+
+	// Execute the command
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("docker compose failed: %w", err)
+	}
 
 	time.Sleep(3 * time.Second)
 	fmt.Println("🛑 Environment stopped.")
