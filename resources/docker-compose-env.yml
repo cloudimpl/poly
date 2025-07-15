@@ -15,13 +15,11 @@ services:
     command: ["/var/task/bootstrap-fargate.sh"]
     restart: unless-stopped
     environment:
-      NATS_HOST: "nats:4222"
       polycode_DEV_MODE: "true"
       polycode_ORG_ID: "xxx"
       polycode_ENV_ID: ${ENVIRONMENT_ID}
       polycode_APP_NAME: "next-env"
       polycode_SERVICE_IDS: "auth-service,param-service,file-service"
-      polycode_RUNTIME: "dev"
 
   next-agent-runtime:
     image: 485496110001.dkr.ecr.us-east-1.amazonaws.com/485496110001/h7npshowhzdc5d/app-u6fj1h32637699:latest
@@ -33,13 +31,11 @@ services:
     command: ["/var/task/bootstrap-fargate.sh"]
     restart: unless-stopped
     environment:
-      NATS_HOST: "nats:4222"
       polycode_DEV_MODE: "true"
       polycode_ORG_ID: "xxx"
       polycode_ENV_ID: ${ENVIRONMENT_ID}
       polycode_APP_NAME: "next-agent-runtime"
       polycode_SERVICE_IDS: "agent-service"
-      polycode_RUNTIME: "dev"
       polycode_ENV_EXTRACTOR: "shared agent"
 
   next-ai-gateway:
@@ -52,10 +48,8 @@ services:
     command: ["/var/task/bootstrap-fargate.sh"]
     restart: unless-stopped
     environment:
-      NATS_HOST: "nats:4222"
       polycode_DEV_MODE: "true"
       polycode_ORG_ID: "xxx"
       polycode_ENV_ID: ${ENVIRONMENT_ID}
       polycode_APP_NAME: "next-ai-gw"
       polycode_SERVICE_IDS: "ai-gateway-service"
-      polycode_RUNTIME: "dev"

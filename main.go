@@ -1,13 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
+	"github.com/aws/smithy-go"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -73,9 +77,6 @@ func ensurePolycodeDirAndCopyFiles() error {
 			if err := os.WriteFile(targetPath, []byte(content), 0644); err != nil {
 				return fmt.Errorf("failed to write %s: %w", name, err)
 			}
-			fmt.Println("Created:", targetPath)
-		} else {
-			fmt.Println("Exists, skipping:", targetPath)
 		}
 	}
 
@@ -181,6 +182,29 @@ func startPlatform() error {
 		return fmt.Errorf("sync sidecar: %w", err)
 	}
 
+	checkCmd := exec.Command("docker", "compose",
+		"-f", "docker-compose-platform.yml",
+		"-p", "polycode-platform",
+		"ps", "--format", "json")
+	checkCmd.Dir = getPolycodeDir()
+
+	output, err := checkCmd.Output()
+	if err == nil && len(output) > 0 {
+		// Parse JSON to check if any service is "running"
+		var services []struct {
+			Name  string `json:"Name"`
+			State string `json:"State"`
+		}
+		if err := json.Unmarshal(output, &services); err == nil {
+			for _, svc := range services {
+				if svc.State == "running" {
+					fmt.Println("✅ Platform already started.")
+					return nil
+				}
+			}
+		}
+	}
+
 	fmt.Println("Starting platform")
 
 	cmd := exec.Command("docker", "compose",
@@ -190,11 +214,6 @@ func startPlatform() error {
 
 	// Set working directory to ~/.polycode
 	cmd.Dir = getPolycodeDir()
-
-	// Optional: stream output to terminal
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
 
 	// Execute the command
 	if err := cmd.Run(); err != nil {
@@ -217,11 +236,6 @@ func stopPlatform() error {
 	// Set working directory to ~/.polycode
 	cmd.Dir = getPolycodeDir()
 
-	// Optional: stream output to terminal
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
 	// Execute the command
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("docker compose failed: %w", err)
@@ -233,24 +247,58 @@ func stopPlatform() error {
 }
 
 func psPlatform() error {
-	fmt.Println("Getting platform status")
+	fmt.Println("Checking platform status...")
 
 	cmd := exec.Command("docker", "compose",
 		"-f", "docker-compose-platform.yml",
 		"-p", "polycode-platform",
-		"ps")
+		"ps", "--format", "json")
 
-	// Set working directory to ~/.polycode
 	cmd.Dir = getPolycodeDir()
 
-	// Optional: stream output to terminal
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
+	var out bytes.Buffer
+	cmd.Stdout = &out
 
-	// Execute the command
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("docker compose failed: %w", err)
+		return fmt.Errorf("docker compose ps failed: %w", err)
+	}
+
+	var containers []struct {
+		Name  string `json:"Name"`
+		State string `json:"State"` // e.g., "running", "exited"
+	}
+
+	if err := json.Unmarshal(out.Bytes(), &containers); err != nil {
+		return fmt.Errorf("failed to parse docker compose ps output: %w", err)
+	}
+
+	if len(containers) == 0 {
+		fmt.Println("STOPPED")
+		return nil
+	}
+
+	allRunning := true
+	anyExited := false
+
+	for _, c := range containers {
+		state := strings.ToLower(c.State)
+		switch state {
+		case "running":
+			// good
+		case "exited", "dead", "removing":
+			anyExited = true
+			allRunning = false
+		default:
+			allRunning = false
+		}
+	}
+
+	if allRunning {
+		fmt.Println("RUNNING")
+	} else if anyExited {
+		fmt.Println("ERROR")
+	} else {
+		fmt.Println("STOPPED")
 	}
 
 	return nil
@@ -262,6 +310,40 @@ func attr(name string, t types.ScalarAttributeType) types.AttributeDefinition {
 
 func key(name string, keyType types.KeyType) types.KeySchemaElement {
 	return types.KeySchemaElement{AttributeName: aws.String(name), KeyType: keyType}
+}
+
+func ensureBucket(ctx context.Context, s3client *s3.Client, bucketName string) error {
+	_, err := s3client.HeadBucket(ctx, &s3.HeadBucketInput{
+		Bucket: aws.String(bucketName),
+	})
+	if err == nil {
+		return nil
+	}
+
+	var apiErr smithy.APIError
+	if errors.As(err, &apiErr) {
+		switch apiErr.ErrorCode() {
+		case "NotFound":
+			// Try to create the bucket
+			_, err := s3client.CreateBucket(ctx, &s3.CreateBucketInput{
+				Bucket: aws.String(bucketName),
+			})
+			if err != nil {
+				var createErr smithy.APIError
+				if errors.As(err, &createErr) && createErr.ErrorCode() == "BucketAlreadyOwnedByYou" {
+					return nil
+				}
+				return fmt.Errorf("failed to create bucket: %w", err)
+			}
+			return nil
+		case "Forbidden":
+			return nil
+		default:
+			return fmt.Errorf("unexpected API error on HeadBucket: %w", err)
+		}
+	}
+
+	return fmt.Errorf("failed to check or create bucket: %w", err)
 }
 
 func setupPlatform(ctx context.Context) error {
@@ -414,14 +496,11 @@ func setupPlatform(ctx context.Context) error {
 			TableName: aws.String(t.Name),
 		})
 		if err == nil {
-			fmt.Println("Table exists:", t.Name)
 			continue
 		}
-		fmt.Println("Creating table:", t.Name)
 		if _, err := ddb.CreateTable(ctx, t.Schema); err != nil {
 			return fmt.Errorf("failed to create table %s: %w", t.Name, err)
 		}
-		fmt.Println("Created:", t.Name)
 	}
 
 	// Set up MinIO S3 bucket
@@ -431,16 +510,9 @@ func setupPlatform(ctx context.Context) error {
 	})
 	bucketName := "polycode-files"
 
-	_, err = s3client.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: aws.String(bucketName)})
-	if err == nil {
-		fmt.Println("S3 bucket exists:", bucketName)
-	} else {
-		fmt.Println("Creating S3 bucket:", bucketName)
-		_, err := s3client.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: aws.String(bucketName)})
-		if err != nil {
-			return fmt.Errorf("failed to create bucket: %w", err)
-		}
-		fmt.Println("Created bucket:", bucketName)
+	err = ensureBucket(ctx, s3client, bucketName)
+	if err != nil {
+		return err
 	}
 
 	fmt.Println("🚀 Platform ready!")
@@ -477,17 +549,13 @@ func loginDockerRegistries() error {
 	}
 	password := parts[1]
 
-	fmt.Println("Logging into ECR for region us-east-1")
 	for _, account := range ecrAccounts {
 		registry := fmt.Sprintf("%s.dkr.ecr.us-east-1.amazonaws.com", account)
 		cmd := exec.Command("docker", "login", "--username", "AWS", "--password-stdin", registry)
 		cmd.Stdin = strings.NewReader(password)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("docker login failed for %s: %w", registry, err)
 		}
-		fmt.Printf("✅ Logged into %s\n", registry)
 	}
 
 	return nil
@@ -514,11 +582,6 @@ func startEnvironment(envID string) error {
 	cmd.Dir = getPolycodeDir()
 
 	cmd.Env = append(os.Environ(), "ENVIRONMENT_ID="+envID) // ✅ set ENVIRONMENT_ID for docker-compose
-
-	// Optional: stream output to terminal
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
 
 	// Execute the command
 	if err := cmd.Run(); err != nil {
@@ -547,11 +610,6 @@ func stopEnvironment(envID string) error {
 
 	cmd.Env = append(os.Environ(), "ENVIRONMENT_ID="+envID) // ✅ set ENVIRONMENT_ID for docker-compose
 
-	// Optional: stream output to terminal
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
 	time.Sleep(3 * time.Second)
 	fmt.Println("🛑 Environment stopped.")
 	return nil
@@ -562,29 +620,162 @@ func psEnvironment(envID string) error {
 		return fmt.Errorf("environment ID is required")
 	}
 
-	fmt.Println("Viewing environment status...")
+	fmt.Println("Checking environment status...")
 
 	cmd := exec.Command("docker", "compose",
 		"-f", "docker-compose-env.yml",
 		"-p", "polycode-env-"+envID,
-		"ps")
+		"ps", "--format", "json")
 
-	// Set working directory to ~/.polycode
 	cmd.Dir = getPolycodeDir()
+	cmd.Env = append(os.Environ(), "ENVIRONMENT_ID="+envID)
 
-	cmd.Env = append(os.Environ(), "ENVIRONMENT_ID="+envID) // ✅ set ENVIRONMENT_ID for docker-compose
+	var out bytes.Buffer
+	cmd.Stdout = &out
 
-	// Optional: stream output to terminal
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
-	// Execute the command
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("docker compose failed: %w", err)
+		return fmt.Errorf("docker compose ps failed: %w", err)
+	}
+
+	var containers []struct {
+		Name  string `json:"Name"`
+		State string `json:"State"` // e.g., "running", "exited", etc.
+	}
+
+	if err := json.Unmarshal(out.Bytes(), &containers); err != nil {
+		return fmt.Errorf("failed to parse docker compose ps output: %w", err)
+	}
+
+	if len(containers) == 0 {
+		fmt.Println("STOPPED")
+		return nil
+	}
+
+	allRunning := true
+	anyExited := false
+
+	for _, c := range containers {
+		state := strings.ToLower(c.State)
+		switch state {
+		case "running":
+			// OK
+		case "exited", "dead", "removing":
+			anyExited = true
+			allRunning = false
+		default:
+			allRunning = false
+		}
+	}
+
+	if allRunning {
+		fmt.Println("RUNNING")
+	} else if anyExited {
+		fmt.Println("ERROR")
+	} else {
+		fmt.Println("STOPPED")
 	}
 
 	return nil
+}
+
+func cleanPlatform() error {
+	dirPath := getPolycodeDir() // e.g., ~/.polycode
+	err := os.RemoveAll(dirPath)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("✅ Cleaned .polycode directory")
+	return nil
+}
+
+func runApp(appPath string, envID string, hostPort string) error {
+	absAppPath, err := filepath.Abs(appPath)
+	if err != nil {
+		return fmt.Errorf("invalid app path: %w", err)
+	}
+
+	if stat, err := os.Stat(absAppPath); err != nil || !stat.IsDir() {
+		return fmt.Errorf("app folder '%s' does not exist", absAppPath)
+	}
+
+	appName := filepath.Base(absAppPath)
+	projectRoot, err := getGitRoot(absAppPath)
+	if err != nil {
+		return fmt.Errorf("detecting git root: %w", err)
+	}
+
+	serviceIDs, _ := findServiceIDs(filepath.Join(absAppPath, "services"))
+
+	appFolder := "."
+	if absAppPath != projectRoot {
+		appFolder = appName
+	}
+
+	imageTag := fmt.Sprintf("%s:latest", appName)
+	fmt.Println("🛠️  Building image:", imageTag)
+	err = dockerBuild(projectRoot, appFolder, imageTag)
+	if err != nil {
+		return fmt.Errorf("docker build failed: %w", err)
+	}
+
+	// Build docker run command
+	runArgs := []string{
+		"run", "--rm", "-it",
+		"--network", "polycode-dev",
+		"-p", "2345:2345",
+		"-v", fmt.Sprintf("%s:/project", projectRoot),
+		"-e", "polycode_DEV_MODE=true",
+		"-e", "polycode_ORG_ID=xxx",
+		"-e", fmt.Sprintf("polycode_ENV_ID=%s", envID),
+		"-e", fmt.Sprintf("polycode_APP_NAME=%s", appName),
+		"-e", fmt.Sprintf("polycode_SERVICE_IDS=%s", serviceIDs),
+	}
+
+	if hostPort != "" {
+		runArgs = append(runArgs, "-p", fmt.Sprintf("%s:8080", hostPort))
+	}
+
+	runArgs = append(runArgs, imageTag)
+
+	fmt.Println("🚀 Running container...")
+	cmd := exec.Command("docker", runArgs...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	return cmd.Run()
+}
+
+func getGitRoot(path string) (string, error) {
+	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	cmd.Dir = path
+	out, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to detect git root: %w", err)
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+func findServiceIDs(path string) (string, error) {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return "", nil // okay if no services
+	}
+	var names []string
+	for _, e := range entries {
+		if e.IsDir() {
+			names = append(names, e.Name())
+		}
+	}
+	return strings.Join(names, ","), nil
+}
+
+func dockerBuild(contextDir, appFolder, imageTag string) error {
+	cmd := exec.Command("docker", "build", "--load", "--build-arg", fmt.Sprintf("APP_FOLDER=%s", appFolder), "-t", imageTag, ".")
+	cmd.Dir = contextDir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func main() {
@@ -620,11 +811,25 @@ func main() {
 						},
 					},
 					{
-						Name:  "ps",
-						Usage: "View the platform",
+						Name:  "status",
+						Usage: "View the status of the platform",
 						Action: func(c *cli.Context) error {
 							if err := psPlatform(); err != nil {
 								return fmt.Errorf("stop docker: %w", err)
+							}
+							return nil
+						},
+					},
+					{
+						Name:  "clean",
+						Usage: "Clean the platform",
+						Action: func(c *cli.Context) error {
+							if err := stopPlatform(); err != nil {
+								return fmt.Errorf("stop docker: %w", err)
+							}
+
+							if err := cleanPlatform(); err != nil {
+								return fmt.Errorf("stop command: %w", err)
 							}
 							return nil
 						},
@@ -668,8 +873,8 @@ func main() {
 						},
 					},
 					{
-						Name:      "ps",
-						Usage:     "View an environment",
+						Name:      "status",
+						Usage:     "View the status of an environment",
 						ArgsUsage: "<environment-id>",
 						Action: func(c *cli.Context) error {
 							if c.Args().Len() < 1 {
@@ -683,6 +888,33 @@ func main() {
 							return nil
 						},
 					},
+				},
+			},
+			{
+				Name:      "run",
+				Usage:     "Run an app in the given environment",
+				ArgsUsage: "<environment-id> [host-port]",
+				Action: func(c *cli.Context) error {
+					if c.Args().Len() < 1 {
+						return fmt.Errorf("missing <environment-id>")
+					}
+
+					envID := c.Args().Get(0)
+					hostPort := ""
+					if c.Args().Len() >= 2 {
+						hostPort = c.Args().Get(1)
+					}
+
+					appPath, err := os.Getwd()
+					if err != nil {
+						return fmt.Errorf("failed to get current directory: %w", err)
+					}
+
+					if err := runApp(appPath, envID, hostPort); err != nil {
+						return fmt.Errorf("run app failed: %w", err)
+					}
+
+					return nil
 				},
 			},
 		},
