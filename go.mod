@@ -1,4 +1,4 @@
-module github.com/cloudimpl/polycode-cli
+module github.com/cloudimpl/poly
 
 go 1.23.0
 
