@@ -799,7 +799,16 @@ func findServiceIDs(path string) (string, error) {
 }
 
 func dockerBuild(contextDir, appFolder, imageTag string) error {
-	cmd := exec.Command("docker", "build", "--load", "--build-arg", fmt.Sprintf("APP_FOLDER=%s", appFolder), "-t", imageTag, ".")
+	dockerfilePath := filepath.Join(getPolycodeDir(), "Dockerfile")
+
+	cmd := exec.Command(
+		"docker", "build",
+		"--load",
+		"--build-arg", fmt.Sprintf("APP_FOLDER=%s", appFolder),
+		"-t", imageTag,
+		"-f", dockerfilePath, // explicitly set Dockerfile path
+		".", // set build context
+	)
 	cmd.Dir = contextDir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
