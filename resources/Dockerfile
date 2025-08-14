@@ -10,6 +10,6 @@ RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
 # Copy from the extra build context "platform"
 COPY --from=platform --chmod=0755 runtime/sidecar /tmp/sidecar
-COPY --from=platform --chmod=0755 runtime/entrypoint.sh /tmp/entrypoint.sh
+COPY --from=platform --chmod=0755 entrypoint.sh /tmp/entrypoint.sh
 
 CMD ["/tmp/entrypoint.sh"]
