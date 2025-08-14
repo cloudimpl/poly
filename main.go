@@ -42,6 +42,11 @@ var EntrypointScript string
 //go:embed resources/Dockerfile
 var Dockerfile string
 
+func hasBuildx() bool {
+	out, err := exec.Command("docker", "buildx", "version").CombinedOutput()
+	return err == nil && len(out) > 0
+}
+
 func getPolycodeDir() string {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -799,12 +804,17 @@ func findServiceIDs(path string) (string, error) {
 }
 
 func dockerBuild(contextDir, appFolder, imageTag string) error {
+	if !hasBuildx() {
+		return fmt.Errorf("docker buildx is not installed")
+	}
+
 	dockerfilePath := filepath.Join(getPolycodeDir(), "Dockerfile")
 
 	cmd := exec.Command(
 		"docker", "build",
 		"--load",
 		"--build-arg", fmt.Sprintf("APP_FOLDER=%s", appFolder),
+		"--build-context", fmt.Sprintf("platform=%s", getPolycodeDir()),
 		"-t", imageTag,
 		"-f", dockerfilePath, // explicitly set Dockerfile path
 		".", // set build context
